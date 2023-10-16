@@ -21,7 +21,7 @@ Bem-vindo à API da MetriCar, uma aplicação que permite que os usuários alugu
    cd nome-do-repositorio
 
 2. **Installar Dependências**
-   npm install 
+    ```npm install 
 
 3. **Configurar Variáveis de Ambiente**
    ```enomeie o arquivo 

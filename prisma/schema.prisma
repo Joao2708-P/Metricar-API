@@ -1,6 +1,5 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -23,19 +22,21 @@ model User{
 }
 
 model Car{
-  id                  String       @id @default(uuid())
-  name                String
-  preco               Decimal
-  quilometragem       Int 
-  ano                 Int
-  condicao            String  
-  exterior_color      String
-  interior_color      String
-  disponibilidade     Boolean
-  tipo_do_carro       String
-  reserva             Reserva[]
-  cretadeAt           DateTime @default(now())
-  updateAt            DateTime @updatedAt
+  id                     String       @id @default(uuid())
+  name                   String
+  imagem                 String       @db.NText
+  preco                  Decimal
+  quilometragem          Int 
+  ano                    Int
+  condicao               String  
+  exterior_color         String
+  interior_color         String
+  disponibilidade        Boolean
+  tipo_do_carro_id       String
+  reserva                Reserva[]
+  tipo                   TipoDoCarro @relation(fields: [tipo_do_carro_id], references: [id])
+  cretadeAt              DateTime @default(now())
+  updateAt               DateTime @updatedAt
 }
 
 model Reserva{
@@ -53,12 +54,18 @@ model Reserva{
 model CreditCard {
   id            String   @id @default(uuid())
   cardNumber    String   @unique
-  expiration    String
+  expiration    DateTime
   cvv           String
   password      String
   user_id       String
-  owner         User    @relation(fields: [user_id], references: [id])
   saldo         Decimal
+  owner         User    @relation(fields: [user_id], references: [id])
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model TipoDoCarro{
+  id      String   @id @default(uuid())  
+  name    String
+  car     Car[]
 }

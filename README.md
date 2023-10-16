@@ -20,16 +20,17 @@ Bem-vindo à API da MetriCar, uma aplicação que permite que os usuários alugu
    git clone https://github.com/seu-usuario/nome-do-repositorio.git
    cd nome-do-repositorio
 
-2. Installar Dependências
-npm install 
+2. **Installar Dependências**
+   ```npm install 
 
-3. Configurar Variáveis de Ambiente
-enomeie o arquivo .env.example para .env e configure as variáveis de ambiente necessárias, como a configuração do banco de dados.
+3. **Configurar Variáveis de Ambiente**
+   ```enomeie o arquivo 
+   .env.example para .env e configure as variáveis de ambiente necessárias, como a configuração do banco de dados.
 
-4. Executar Aplicação
-npm run start ou
-npm run start:dev
-Para  em transformar de produção:
-npm run build
-Rodar em produção: 
-node dist src/server.ts
+4. **Executar Aplicação**
+   ```npm run start ou
+         npm run start:dev
+         Para  em transformar de produção:
+         npm run build
+         Rodar em produção: 
+         node dist src/server.ts

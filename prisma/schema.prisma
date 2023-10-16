@@ -1,0 +1,64 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model User{
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  password    String
+  card_credit String
+  reserva     Reserva[]
+  card        CreditCard[]
+  cretadeAt   DateTime @default(now())
+  updateAt    DateTime @updatedAt
+}
+
+model Car{
+  id                  String       @id @default(uuid())
+  name                String
+  preco               Decimal
+  quilometragem       Int 
+  ano                 Int
+  condicao            String  
+  exterior_color      String
+  interior_color      String
+  disponibilidade     Boolean
+  tipo_do_carro       String
+  reserva             Reserva[]
+  cretadeAt           DateTime @default(now())
+  updateAt            DateTime @updatedAt
+}
+
+model Reserva{
+  id                   String         @id @default(uuid())
+  data_da_reserva      DateTime
+  data_de_devolucao    DateTime
+  id_user              String
+  id_car               String
+  preco_total          Decimal
+  card_credit_id       String
+  car                  Car    @relation(fields: [id_car], references: [id])
+  user                 User   @relation(fields: [id_user], references: [id])
+}
+
+model CreditCard {
+  id            String   @id @default(uuid())
+  cardNumber    String   @unique
+  expiration    String
+  cvv           String
+  password      String
+  user_id       String
+  owner         User    @relation(fields: [user_id], references: [id])
+  saldo         Decimal
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

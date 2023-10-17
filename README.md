@@ -36,8 +36,8 @@ Bem-vindo à API da MetriCar, uma aplicação fictícia que simula um serviço d
    Para compilar para JS para produção: npm run build
    Rodar em produção: node dist src/server.ts
    
-##Sobre o projeto
-   Explicando o projeto
+## Sobre o projeto
+
    A MetriCar API é uma aplicação de aluguel de carros fictícia que demonstra um ambiente de aluguel de
    carros e gerenciamento de reservas.
    Como parte do projeto, os usuários podem explorar a frota de carros disponíveis, visualizar detalhes dos 

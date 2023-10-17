@@ -8,7 +8,6 @@ Bem-vindo à API da MetriCar, uma aplicação que permite que os usuários alugu
 - [Express](https://expressjs.com/): Estrutura de aplicativo web para Node.js.
 - [Prisma](https://prisma.io/): ORM para interagir com o banco de dados.
 - [Zod](https://github.com/colinhacks/zod): Biblioteca para validação de entrada de dados.
-- [Vitest](https://github.com/visionmedia/vitest): Test runner para testes unitários.
 - [Tsup](https://github.com/TehShrike/tsup): Empacotador TypeScript para projetos web.
 - [Tsx](https://www.typescriptlang.org/): Linguagem de programação.
 - Outras bibliotecas e ferramentas relevantes.
@@ -21,11 +20,14 @@ Bem-vindo à API da MetriCar, uma aplicação que permite que os usuários alugu
    cd nome-do-repositorio
 
 2. **Installar Dependências**
-    ```npm install 
+    ```npm install
+    npm install
 
 3. **Configurar Variáveis de Ambiente**
    ```enomeie o arquivo 
-   .env.example para .env e configure as variáveis de ambiente necessárias, como a configuração do banco de dados.
+   .env.example para
+   .env e configure as variáveis de ambiente necessárias,
+   como a configuração do banco de dados.
 
 4. **Executar Aplicação**
    ```npm run start ou

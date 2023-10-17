@@ -25,14 +25,13 @@ Bem-vindo à API da MetriCar, uma aplicação que permite que os usuários alugu
 
 3. **Configurar Variáveis de Ambiente**
    ```enomeie o arquivo 
-   .env.example para
-   .env e configure as variáveis de ambiente necessárias,
-   como a configuração do banco de dados.
+   - .env.example para
+   - .env e configure as variáveis de ambiente necessárias,
+   - como a configuração do banco de dados.
 
 4. **Executar Aplicação**
-   ```npm run start ou
-         npm run start:dev
-         Para  em transformar de produção:
-         npm run build
-         Rodar em produção: 
-         node dist src/server.ts
+   ```Como rodar a Aplicação
+   npm run start ou
+   npm run start:dev - Atualiza junto com o código
+   Para compilar para JS para produção: npm run build
+   Rodar em produção: node dist src/server.ts

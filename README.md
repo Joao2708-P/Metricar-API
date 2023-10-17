@@ -10,7 +10,7 @@ Bem-vindo à API da MetriCar, uma aplicação fictícia que simula um serviço d
 - [Zod](https://github.com/colinhacks/zod): Biblioteca para validação de entrada de dados.
 - [Tsup](https://github.com/TehShrike/tsup): Empacotador TypeScript para projetos web.
 - [Tsx](https://github.com/esbuild-kit/tsx): Lib de execução de typescript.
-- [Typescript](https://www.typescriptlang.org/): Libguagem de programação utilizada.
+- [Typescript](https://www.typescriptlang.org/): Linguagem de programação utilizada.
 
 ## Configuração do Projeto
 

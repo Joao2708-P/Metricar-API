@@ -10,6 +10,11 @@ import UpdateUserController from '../Controllers/User/UpdateUser.Controller';
 //-----------------------------------------------------------------------------
 
 //Cars Controller
+import CreateCarsController from '../Controllers/Cars/CreateCars.Controller';
+import GetCarController from '../Controllers/Cars/GetCars.Controller';
+import GetUniqueCarController from '../Controllers/Cars/GetUniqueCar.Controller';
+import DeleteCarController from '../Controllers/Cars/DeleteCars.Controller';
+import UpdateCarsController from '../Controllers/Cars/UpdateCars.Controller';
 //-----------------------------------------------------------------------------
 
 //Reserva Controller
@@ -38,10 +43,15 @@ router.get('/get-user', GetUniqueUserController);
 
 router.delete('/delete-user', DeleteUserController);
 
-router.put('/update-user', UpdateUserController);
+router.put('/update-user/:id', UpdateUserController);
 //---------------------------------------------------------------
 
 //Rotas dos Carros
+router.post("/create-car", CreateCarsController);
+router.get("/get-All-cars", GetCarController);
+router.get("/get-Unique-car", GetUniqueCarController);
+router.delete("/delete-car", DeleteCarController);
+router.put("/update-car",  UpdateCarsController);
 //---------------------------------------------------------------
 
 //Rotas da Reserva

@@ -5,6 +5,10 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -21,11 +25,14 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-
-// src/server.ts
-var import_express2 = __toESM(require("express"));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/routes/routes.service.ts
+var routes_service_exports = {};
+__export(routes_service_exports, {
+  default: () => routes_service_default
+});
+module.exports = __toCommonJS(routes_service_exports);
 var import_express = __toESM(require("express"));
 
 // src/Controllers/User/CreateUser.Controller.ts
@@ -577,13 +584,3 @@ router.post("/create-card_credit", CreateCar_CreditController);
 router.get("/get_card_credit", GetUniqueCard_CreditController);
 router.put("/update_card_credit", UpdateCard_CreditController);
 var routes_service_default = router;
-
-// src/server.ts
-var app = (0, import_express2.default)();
-app.use(import_express2.default.json());
-app.use(routes_service_default);
-var port = 3e3;
-app.use("/api", routes_service_default);
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});

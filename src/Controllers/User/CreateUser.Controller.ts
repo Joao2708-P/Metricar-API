@@ -47,5 +47,3 @@ export default async function CreateUserController(req: Request, res: Response) 
         return res.status(400).json({ error: "Erro ao cadastrar o usuário" });
     }
 }
-
-// Outras funções de tratamento de requisições podem ser adicionadas aqui, se necessário

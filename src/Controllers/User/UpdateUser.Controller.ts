@@ -29,18 +29,16 @@ export default async function UpdateUserController(req: Request, res: Response)
 
         const passwordHash = bcrypt.hash(password, 10);
 
-        const data = {
-            name: name,
-            email: email,
-            password: passwordHash,
-            card_credit: card_credit
-        }
-
         const updateUser = await prisma.user.update({
             where: {
                 id: id
             },
-            data: data as Prisma.UserUpdateInput
+            data: {
+                    name: name,
+                    email: email,
+                    password: String(passwordHash),
+                    card_credit: card_credit
+            }
         });
 
         return res.status(200).json(updateUser);

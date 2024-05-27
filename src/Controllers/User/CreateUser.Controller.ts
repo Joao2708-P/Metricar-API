@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { z } from "zod";
-
 import prisma from '../../Database/prismaClient';
 
 const userSchema = z.object({

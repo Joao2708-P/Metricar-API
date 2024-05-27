@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../../Database/prismaClient";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 
 const createCarSchema = z.object({
     name: z.string(),
@@ -33,19 +34,21 @@ export default async function(req: Request, res: Response)
         if(existingCar)
             return res.status(404).json("Carro existente.");
 
+        const data = {
+            name: name,
+            imagem: imagem,
+            preco: preco,
+            quilometragem: quilometragem,
+            ano: ano,
+            condicao: condicao,
+            exterior_color: exterior_color,
+            interior_color: interior_color,
+            disponibilidade: disponibilidade, 
+            tipo_do_carro_id: tipo_do_carro_id
+        }
+
         const createCar = await prisma.car.create({
-            data: {
-                name: name,
-                imagem: imagem,
-                preco: preco,
-                quilometragem: quilometragem,
-                ano: ano,
-                condicao: condicao,
-                exterior_color: exterior_color,
-                interior_color: interior_color,
-                disponibilidade: disponibilidade, 
-                tipo_do_carro_id: tipo_do_carro_id
-            }
+            data: data as Prisma.CarCreateInput
         });
 
         return res.status(200).json(createCar);

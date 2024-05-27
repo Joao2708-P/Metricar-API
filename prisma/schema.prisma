@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlserver"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -24,7 +24,7 @@ model User{
 model Car{
   id                     String       @id @default(uuid())
   name                   String
-  imagem                 String       @db.NText
+  imagem                 String       @db.Text
   preco                  Decimal
   quilometragem          Int 
   ano                    Int
@@ -34,7 +34,8 @@ model Car{
   disponibilidade        Boolean
   tipo_do_carro_id       String
   reserva                Reserva[]
-  tipo                   TipoDoCarro @relation(fields: [tipo_do_carro_id], references: [id])
+  carPromotion           CarPromotion[]
+  type_slug              String
   cretadeAt              DateTime @default(now())
   updateAt               DateTime @updatedAt
 }
@@ -64,8 +65,13 @@ model CreditCard {
   updatedAt     DateTime @updatedAt
 }
 
-model TipoDoCarro{
-  id      String   @id @default(uuid())  
-  name    String
-  car     Car[]
+model CarPromotion {
+
+  id          Int @id @default(dbgenerated("0"))
+  description String
+  discount    Decimal
+  start_date  DateTime
+  end_date    DateTime
+  car_id      String 
+  car         Car  @relation(fields: [car_id], references: [id])
 }

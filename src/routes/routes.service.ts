@@ -33,7 +33,7 @@ import UpdateCard_CreditController from '../Controllers/Card_credit/UpdateCard_C
 router.get('/', async (req, res) => {
     res.send('Hello World!');
 });
-
+ 
 //Rotas de Usuário
 router.post('/create-user', CreateUserController);
 
@@ -48,9 +48,13 @@ router.put('/update-user/:id', UpdateUserController);
 
 //Rotas dos Carros
 router.post("/create-car", CreateCarsController);
+
 router.get("/get-All-cars", GetCarController);
+
 router.get("/get-Unique-car", GetUniqueCarController);
+
 router.delete("/delete-car", DeleteCarController);
+
 router.put("/update-car",  UpdateCarsController);
 //---------------------------------------------------------------
 

@@ -19,6 +19,7 @@ model User{
   card        CreditCard[]
   cretadeAt   DateTime @default(now())
   updateAt    DateTime @updatedAt
+  @@map("users")
 }
 
 model Car{
@@ -34,10 +35,11 @@ model Car{
   disponibilidade        Boolean
   tipo_do_carro_id       String
   reserva                Reserva[]
-  carPromotion           CarPromotion[]
   type_slug              String
+  promotion_slug         Boolean
   cretadeAt              DateTime @default(now())
   updateAt               DateTime @updatedAt
+  @@map("cars")
 }
 
 model Reserva{
@@ -50,12 +52,13 @@ model Reserva{
   card_credit_id       String
   car                  Car    @relation(fields: [id_car], references: [id])
   user                 User   @relation(fields: [id_user], references: [id])
+  @@map("reservas")
 }
 
 model CreditCard {
   id            String   @id @default(uuid())
   cardNumber    String   @unique
-  expiration    DateTime
+  expiration    DateTime @db.Date
   cvv           String
   password      String
   user_id       String
@@ -63,15 +66,5 @@ model CreditCard {
   owner         User    @relation(fields: [user_id], references: [id])
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-}
-
-model CarPromotion {
-
-  id          Int @id @default(dbgenerated("0"))
-  description String
-  discount    Decimal
-  start_date  DateTime
-  end_date    DateTime
-  car_id      String 
-  car         Car  @relation(fields: [car_id], references: [id])
+  @@map("creditCards")
 }

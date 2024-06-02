@@ -2,32 +2,19 @@ import express from 'express';
 const router = express.Router();
 
 //User Controller
-import CreateUserController  from '../Controllers/User/CreateUser.Controller';
-import GetUserController from '../Controllers/User/GetUser.Controller';
-import GetUniqueUserController from '../Controllers/User/GetUniqueUser.Controller';
-import DeleteUserController from '../Controllers/User/DeleteUser.Controller';
-import UpdateUserController from '../Controllers/User/UpdateUser.Controller';
+import UserController from '../Controllers/User.Controller';
 //-----------------------------------------------------------------------------
 
 //Cars Controller
-import CreateCarsController from '../Controllers/Cars/CreateCars.Controller';
-import GetCarController from '../Controllers/Cars/GetCars.Controller';
-import GetUniqueCarController from '../Controllers/Cars/GetUniqueCar.Controller';
-import DeleteCarController from '../Controllers/Cars/DeleteCars.Controller';
-import UpdateCarsController from '../Controllers/Cars/UpdateCars.Controller';
+import CarController from '../Controllers/Cars.Controller';
 //-----------------------------------------------------------------------------
 
 //Reserva Controller
-import CreateReservaController from '../Controllers/Reserva/CreateReserva.Controller';
-import GetReservaController from '../Controllers/Reserva/GetReserva.Controller';
-import DeleteReservaController from '../Controllers/Reserva/DeleteReserva.Controller';
-import UpdateReservaController from '../Controllers/Reserva/UpdateReserva.Controller';
+import ReservaController from '../Controllers/Reserva.Controller'
 //-----------------------------------------------------------------------------
 
 //Card_credit Controller
-import CreateCar_CreditController from '../Controllers/Card_credit/CreateCard_Credit.Controller';
-import GetUniqueCard_CreditController from '../Controllers/Card_credit/GetUniqueCard_Credit.Controller';
-import UpdateCard_CreditController from '../Controllers/Card_credit/UpdateCard_Credit.Controller';
+import CardCreditController from '../Controllers/Card_Credit.Controller';
 //------------------------------------------------------------------------------
 
 router.get('/', async (req, res) => {
@@ -35,45 +22,51 @@ router.get('/', async (req, res) => {
 });
  
 //Rotas de Usuário
-router.post('/create-user', CreateUserController);
+router.post('/create-user', UserController.createUser);
 
-router.get('/get-All-User', GetUserController);
+router.get('/get-All-User', UserController.getUser);
 
-router.get('/get-user', GetUniqueUserController);
+router.get('/get-user/:id', UserController.getUserById);
 
-router.delete('/delete-user', DeleteUserController);
+router.delete('/delete-user/:id', UserController.deleteUser);
 
-router.put('/update-user/:id', UpdateUserController);
+router.put('/update-user/:id', UserController.updateUser);
 //---------------------------------------------------------------
 
 //Rotas dos Carros
-router.post("/create-car", CreateCarsController);
+router.post("/create-car", CarController.createCar);
 
-router.get("/get-All-cars", GetCarController);
+router.get("/get-All-cars", CarController.getCar);
 
-router.get("/get-Unique-car", GetUniqueCarController);
+router.get("/get-Unique-car/:id", CarController.getByIdCar);
 
-router.delete("/delete-car", DeleteCarController);
+router.delete("/delete-car/:id", CarController.deleteCar);
 
-router.put("/update-car",  UpdateCarsController);
+router.put("/update-car/:id", CarController.updateCar);
 //---------------------------------------------------------------
 
 //Rotas da Reserva
-router.post("/create-reserva", CreateReservaController);
+router.post("/create-reserva", ReservaController.createReserva);
 
-router.get("/get-reserva", GetReservaController);
+router.get("/get-reserva", ReservaController.getAllReservas);
 
-router.delete("/delete-reserva", DeleteReservaController);
+router.get("/get-reserva/:id", ReservaController.getUniqueReserva);
 
-router.put("/update-reserva", UpdateReservaController);
+router.delete("/delete-reserva/:id", ReservaController.deleteReserva);
+
+router.put("/update-reserva/:id", ReservaController.updateReserva);
 //---------------------------------------------------------------
 
 //Rotas Card_Credit
-router.post("/create-card_credit", CreateCar_CreditController);
+router.post("/create-card_credit", CardCreditController.createCardCredit);
+ 
+router.get("/get_card_credit", CardCreditController.getAllCards);
 
-router.get("/get_card_credit", GetUniqueCard_CreditController);
+router.delete("/delete-card-credit/:id", CardCreditController.deleteCard);
 
-router.put("/update_card_credit", UpdateCard_CreditController);
+router.get("get-unique-card/:id", CardCreditController.getUniqueCard)
+
+router.put("/update_card_credit/:id", CardCreditController.updateCard);
 //---------------------------------------------------------------
 
 export default router;

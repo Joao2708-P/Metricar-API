@@ -28,7 +28,7 @@ var import_express2 = __toESM(require("express"));
 // src/routes/routes.service.ts
 var import_express = __toESM(require("express"));
 
-// src/Controllers/User/CreateUser.Controller.ts
+// src/Service/CreateUser.Service.ts
 var import_bcrypt = __toESM(require("bcrypt"));
 var import_zod = require("zod");
 
@@ -37,23 +37,21 @@ var import_client = require("@prisma/client");
 var prisma = new import_client.PrismaClient();
 var prismaClient_default = prisma;
 
-// src/Controllers/User/CreateUser.Controller.ts
+// src/Service/CreateUser.Service.ts
 var userSchema = import_zod.z.object({
   name: import_zod.z.string(),
   email: import_zod.z.string().email({ message: "Email inv\xE1lido!" }),
   password: import_zod.z.string().min(8, { message: "Senha precisa conter no m\xEDnimo 8 caracteres." }),
   card_credit: import_zod.z.string().max(19)
 });
-async function CreateUserController(req, res) {
-  try {
-    const { name, email, password, card_credit } = userSchema.parse(req.body);
+var UserService = class {
+  static async createUser(userData) {
+    const { name, email, password, card_credit } = userSchema.parse(userData);
     const existingUser = await prismaClient_default.user.findUnique({
-      where: {
-        email
-      }
+      where: { email }
     });
     if (existingUser) {
-      return res.status(409).json({ error: "Email de usu\xE1rio j\xE1 cadastrado." });
+      throw new Error("Email de usu\xE1rio j\xE1 cadastrado.");
     }
     const passwordHash = await import_bcrypt.default.hash(password, 10);
     const data = {
@@ -65,130 +63,124 @@ async function CreateUserController(req, res) {
     const createdUser = await prismaClient_default.user.create({
       data
     });
-    return res.status(201).json(createdUser);
-  } catch (error) {
-    console.log(error);
-    return res.status(400).json({ error: "Erro ao cadastrar o usu\xE1rio" });
+    return createdUser;
   }
-}
-
-// src/Controllers/User/GetUser.Controller.ts
-async function GetUserController(req, res) {
-  try {
-    const users = await prismaClient_default.user.findMany();
-    return res.status(200).json(users);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ error: "Erro ao buscar usu\xE1rios." });
+  static async getUser() {
+    const user = await prismaClient_default.user.findMany();
+    return user;
   }
-}
-
-// src/Controllers/User/GetUniqueUser.Controller.ts
-var import_zod2 = require("zod");
-var findUniqueSchema = import_zod2.z.object({
-  email: import_zod2.z.string().email({ message: "Email inv\xE1lido" })
-});
-async function getUniqueUserController(req, res) {
-  try {
-    const { email } = findUniqueSchema.parse(req.body);
-    const getUnique = await prismaClient_default.user.findUnique({
-      where: {
-        email: String(email)
-      }
+  static async getUserById(userId) {
+    const user = await prismaClient_default.user.findUnique({
+      where: { id: userId }
     });
-    if (!getUnique) {
+    if (!user) {
+      throw new Error("Usu\xE1rio n\xE3o encontrado.");
+    }
+    return user;
+  }
+  static async updateUser(userId, updateData) {
+    const existingUser = await prismaClient_default.user.findUnique({
+      where: { id: userId }
+    });
+    if (!existingUser) {
+      throw new Error("Usu\xE1rio n\xE3o encontrado.");
+    }
+    if (updateData.password) {
+      updateData.password = await import_bcrypt.default.hash(updateData.password, 10);
+    }
+    const updatedUser = await prismaClient_default.user.update({
+      where: { id: userId },
+      data: updateData
+    });
+    return updatedUser;
+  }
+  static async deleteUser(userId) {
+    const existingUser = await prismaClient_default.user.findUnique({
+      where: { id: userId }
+    });
+    if (!existingUser) {
+      throw new Error("Usu\xE1rio n\xE3o encontrado.");
+    }
+    await prismaClient_default.user.delete({
+      where: { id: userId }
+    });
+    return { message: "Usu\xE1rio deletado com sucesso." };
+  }
+};
+var CreateUser_Service_default = UserService;
+
+// src/Controllers/User.Controller.ts
+var UserController = class {
+  static async createUser(req, res) {
+    try {
+      const userData = req.body;
+      const createdUser = await CreateUser_Service_default.createUser(userData);
+      return res.status(201).json(createdUser);
+    } catch (error) {
+      console.error(error);
+      if (error === "Email de usu\xE1rio j\xE1 cadastrado.") {
+        return res.status(409).json({ error });
+      }
+      return res.status(400).json({ error: "Erro ao cadastrar o usu\xE1rio" });
+    }
+  }
+  static async getUser(req, res) {
+    try {
+      const user = await CreateUser_Service_default.getUser();
+      return res.status(200).json(user);
+    } catch (error) {
+      return res.status(400).json({ error: "Erro ao cadastrar ao buscar usu\xE1rios" });
+    }
+  }
+  static async getUserById(req, res) {
+    try {
+      const { id } = req.params;
+      const user = await CreateUser_Service_default.getUserById(id);
+      return res.status(200).json(user);
+    } catch (error) {
+      console.error(error);
       return res.status(404).json({ error: "Usu\xE1rio n\xE3o encontrado." });
     }
-    return res.status(200).json(getUnique);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ error: "Erro interno do servidor." });
   }
-}
-
-// src/Controllers/User/DeleteUser.Controller.ts
-var import_zod3 = require("zod");
-var deleteSchema = import_zod3.z.object({
-  email: import_zod3.z.string().email({ message: "Email Inv\xE1lido." })
-});
-async function DeleteUserController(req, res) {
-  try {
-    const { email } = deleteSchema.parse(req.body);
-    const existsUser = prismaClient_default.user.findUnique({
-      where: {
-        email
-      }
-    });
-    if (!existsUser)
-      return res.status(404).json({ erro: "Usu\xE1rio n\xE3o encontrado." });
-    const deleteUser = await prismaClient_default.user.delete({
-      where: {
-        email
-      }
-    });
-    return res.status(200).json(deleteUser);
-  } catch (erro) {
-    console.log(erro);
-    return res.status(500).json({ erro: "Erro interno no servidor." });
+  static async updateUser(req, res) {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      const updatedUser = await CreateUser_Service_default.updateUser(id, updateData);
+      return res.status(200).json(updatedUser);
+    } catch (error) {
+      console.error(error);
+      return res.status(400).json({ error: "Erro ao atualizar o usu\xE1rio" });
+    }
   }
-}
-
-// src/Controllers/User/UpdateUser.Controller.ts
-var import_zod4 = require("zod");
-var import_bcrypt2 = __toESM(require("bcrypt"));
-var userSchema2 = import_zod4.z.object({
-  name: import_zod4.z.string(),
-  email: import_zod4.z.string().email({ message: "Email inv\xE1lido!" }),
-  password: import_zod4.z.string().min(8, { message: "Senha precisa conter no m\xEDnimo 8 caracteres." }),
-  card_credit: import_zod4.z.string().max(19)
-});
-async function UpdateUserController(req, res) {
-  try {
-    const { name, email, password, card_credit } = userSchema2.parse(req.body);
-    const { id } = req.params;
-    const existingUser = prismaClient_default.user.findUnique({
-      where: {
-        email
-      }
-    });
-    if (!existingUser)
-      return res.status(404).json({ erro: "Usu\xE1rio n\xE3o encontrado" });
-    const passwordHash = import_bcrypt2.default.hash(password, 10);
-    const data = {
-      name,
-      email,
-      password: passwordHash,
-      card_credit
-    };
-    const updateUser = await prismaClient_default.user.update({
-      where: {
-        id
-      },
-      data
-    });
-    return res.status(200).json(updateUser);
-  } catch (erro) {
-    console.log(erro);
-    return res.status(500).json({ erro: "Erro interno do servidor" });
+  static async deleteUser(req, res) {
+    try {
+      const { id } = req.params;
+      const message = await CreateUser_Service_default.deleteUser(id);
+      return res.status(200).json(message);
+    } catch (error) {
+      console.error(error);
+      return res.status(400).json({ error: "Erro ao deletar o usu\xE1rio" });
+    }
   }
-}
+};
 
-// src/Controllers/Cars/CreateCars.Controller.ts
-var import_zod5 = require("zod");
-var createCarSchema = import_zod5.z.object({
-  name: import_zod5.z.string(),
-  imagem: import_zod5.z.string(),
-  preco: import_zod5.z.number().min(0),
-  quilometragem: import_zod5.z.number().min(0),
-  ano: import_zod5.z.number(),
-  condicao: import_zod5.z.string(),
-  exterior_color: import_zod5.z.string(),
-  interior_color: import_zod5.z.string(),
-  disponibilidade: import_zod5.z.boolean(),
-  tipo_do_carro_id: import_zod5.z.string()
+// src/Service/Car.Service.ts
+var import_zod2 = require("zod");
+var createCarSchema = import_zod2.z.object({
+  name: import_zod2.z.string(),
+  imagem: import_zod2.z.string(),
+  preco: import_zod2.z.number().min(0),
+  quilometragem: import_zod2.z.number().min(0),
+  ano: import_zod2.z.number(),
+  condicao: import_zod2.z.string(),
+  exterior_color: import_zod2.z.string(),
+  interior_color: import_zod2.z.string(),
+  disponibilidade: import_zod2.z.boolean(),
+  tipo_do_carro_id: import_zod2.z.string()
 });
-async function CreateCars_Controller_default(req, res) {
-  try {
+var CarService = class {
+  static async createCar(carData) {
     const {
       name,
       imagem,
@@ -200,151 +192,154 @@ async function CreateCars_Controller_default(req, res) {
       interior_color,
       disponibilidade,
       tipo_do_carro_id
-    } = createCarSchema.parse(req.body);
-    const { id } = req.params;
+    } = createCarSchema.parse(carData);
+    const data = {
+      name,
+      imagem,
+      preco,
+      quilometragem,
+      ano,
+      condicao,
+      exterior_color,
+      interior_color,
+      disponibilidade,
+      tipo_do_carro_id
+    };
+    const createdCar = await prismaClient_default.car.create({
+      data
+    });
+    return createdCar;
+  }
+  static async deleteCar(carId) {
     const existingCar = await prismaClient_default.car.findUnique({
-      where: {
-        id
-      }
+      where: { id: carId }
     });
-    if (existingCar)
-      return res.status(404).json("Carro existente.");
-    const createCar = await prismaClient_default.car.create({
-      data: {
-        name,
-        imagem,
-        preco,
-        quilometragem,
-        ano,
-        condicao,
-        exterior_color,
-        interior_color,
-        disponibilidade,
-        tipo_do_carro_id
-      }
-    });
-    return res.status(200).json(createCar);
-  } catch (erro) {
-    console.log(erro);
-    return res.status(500).json({ erro: "Erro interno do servidor." });
-  }
-}
-
-// src/Controllers/Cars/GetCars.Controller.ts
-async function GetCarController(req, res) {
-  try {
-    const cars = await prismaClient_default.car.findMany();
-    return res.status(200).json(cars);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ error: "Erro ao buscar carro." });
-  }
-}
-
-// src/Controllers/Cars/GetUniqueCar.Controller.ts
-async function GetUniqueCarController(req, res) {
-  try {
-    const { id } = req.params;
-    const getUnique = await prismaClient_default.car.findUnique({
-      where: {
-        id: String(id)
-      }
-    });
-    if (!getUnique) {
-      return res.status(404).json({ error: "Carro n\xE3o encontrado." });
+    if (!existingCar) {
+      throw new Error("Carro n\xE3o existente.");
     }
-    return res.status(200).json(getUnique);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ error: "Erro interno do servidor." });
-  }
-}
-
-// src/Controllers/Cars/DeleteCars.Controller.ts
-async function DeleteCarController(req, res) {
-  try {
-    const { id } = req.params;
-    const deleteCar = await prismaClient_default.car.delete({
-      where: {
-        id: String(id)
-      }
+    await prismaClient_default.car.delete({
+      where: { id: carId }
     });
-    if (!deleteCar) {
-      return res.status(404).json({ error: "Carro n\xE3o encontrado." });
-    }
-    return res.status(200).json(deleteCar);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ error: "Erro interno do servidor." });
+    return { message: "Carro deletado com sucesso." };
   }
-}
-
-// src/Controllers/Cars/UpdateCars.Controller.ts
-var import_zod6 = require("zod");
-var updateCarSchema = import_zod6.z.object({
-  name: import_zod6.z.string().optional(),
-  imagem: import_zod6.z.string().optional(),
-  preco: import_zod6.z.number().min(0).optional(),
-  quilometragem: import_zod6.z.number().min(0).optional(),
-  ano: import_zod6.z.number().optional(),
-  condicao: import_zod6.z.string().optional(),
-  exterior_color: import_zod6.z.string().optional(),
-  interior_color: import_zod6.z.string().optional(),
-  disponibilidade: import_zod6.z.boolean().optional(),
-  tipo_do_carro_id: import_zod6.z.string().optional()
-});
-async function UpdateCars_Controller_default(req, res) {
-  try {
-    const { id } = req.params;
-    const updates = updateCarSchema.parse(req.body);
+  static async getCar() {
+    const car = await prismaClient_default.car.findMany();
+    return car;
+  }
+  static async getByIdCar(carId) {
+    const car = await prismaClient_default.car.findUnique({
+      where: { id: carId }
+    });
+    if (!car) {
+      throw new Error("Carro n\xE3o encontrado.");
+    }
+    return car;
+  }
+  static updateCar = async (id, updates) => {
+    const validatedUpdates = createCarSchema.parse(updates);
     const existingCar = await prismaClient_default.car.findUnique({
       where: {
         id
       }
     });
     if (!existingCar) {
-      return res.status(404).json("Carro n\xE3o encontrado.");
+      throw new Error("Carro n\xE3o encontrado.");
     }
     const updatedCar = await prismaClient_default.car.update({
       where: {
         id
       },
-      data: updates
+      data: validatedUpdates
     });
-    return res.status(200).json(updatedCar);
-  } catch (erro) {
-    console.log(erro);
-    return res.status(500).json({ erro: "Erro interno do servidor." });
-  }
-}
+    return updatedCar;
+  };
+};
+var Car_Service_default = CarService;
 
-// src/Controllers/Reserva/CreateReserva.Controller.ts
-var import_zod7 = require("zod");
-var reserveSchema = import_zod7.z.object({
-  data_da_reserva: import_zod7.z.date(),
-  data_da_devolucao: import_zod7.z.date(),
-  id_user: import_zod7.z.string(),
-  id_car: import_zod7.z.string(),
-  preco_total: import_zod7.z.number().min(0),
-  id_credit_card: import_zod7.z.string()
+// src/Controllers/Cars.Controller.ts
+var CarController = class {
+  static async createCar(req, res) {
+    try {
+      const carData = req.body;
+      const createdCar = await Car_Service_default.createCar(carData);
+      return res.status(201).json(createdCar);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Erro interno do servidor." });
+    }
+  }
+  static async deleteCar(req, res) {
+    try {
+      const { id } = req.params;
+      const response = await Car_Service_default.deleteCar(id);
+      return res.status(200).json(response);
+    } catch (error) {
+      if (error === "Carro n\xE3o existente.") {
+        return res.status(404).json({ error });
+      }
+      console.error(error);
+      return res.status(500).json({ error: "Erro interno do servidor." });
+    }
+  }
+  static async getCar(req, res) {
+    try {
+      const cars = await Car_Service_default.getCar();
+      return res.status(200).json(cars);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Erro interno do servidor." });
+    }
+  }
+  static async getByIdCar(req, res) {
+    try {
+      const { id } = req.params;
+      const car = await Car_Service_default.getByIdCar(id);
+      return res.status(200).json(car);
+    } catch (error) {
+      if (error === "Carro n\xE3o encontrado.") {
+        return res.status(404).json({ error });
+      }
+      console.error(error);
+      return res.status(500).json({ error: "Erro interno do servidor." });
+    }
+  }
+  static async updateCar(req, res) {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const updatedCar = await Car_Service_default.updateCar(id, updates);
+      return res.status(200).json(updatedCar);
+    } catch (error) {
+      if (error === "Carro n\xE3o encontrado.") {
+        return res.status(404).json({ error });
+      }
+      console.error(error);
+      return res.status(500).json({ error: "Erro interno do servidor." });
+    }
+  }
+};
+var Cars_Controller_default = CarController;
+
+// src/Service/Reserva.Service.ts
+var import_zod3 = require("zod");
+var reserveSchema = import_zod3.z.object({
+  data_da_reserva: import_zod3.z.date(),
+  data_da_devolucao: import_zod3.z.date(),
+  id_user: import_zod3.z.string(),
+  id_car: import_zod3.z.string(),
+  preco_total: import_zod3.z.number().min(0),
+  id_credit_card: import_zod3.z.string()
 });
-async function CreateReservaController(req, res) {
-  try {
-    const {
-      data_da_reserva,
-      data_da_devolucao,
-      id_user,
-      id_car,
-      preco_total,
-      id_credit_card
-    } = reserveSchema.parse(req.body);
+var ReservaService = class {
+  static async createReserva(reservaData) {
+    const { data_da_reserva, data_da_devolucao, id_user, id_car, preco_total, id_credit_card } = reserveSchema.parse(reservaData);
     const existingReservas = await prismaClient_default.reserva.findMany({
       where: {
         data_da_reserva
       }
     });
     if (existingReservas && existingReservas.length > 0) {
-      return res.status(400).json({ erro: "J\xE1 existe uma reserva para esta data de reserva." });
+      throw new Error("J\xE1 existe uma reserva para esta data de reserva.");
     }
     const data = {
       data_da_reserva,
@@ -357,233 +352,297 @@ async function CreateReservaController(req, res) {
     const createReserva = await prismaClient_default.reserva.create({
       data
     });
-    return res.status(200).json(createReserva);
-  } catch (erro) {
-    console.log(erro);
-    return res.status(500).json({ erro: "Erro interno no servidor." });
+    return createReserva;
   }
-}
-
-// src/Controllers/Reserva/GetReserva.Controller.ts
-async function GetReservaController(req, res) {
-  try {
-    const getReserva = await prismaClient_default.reserva.findMany();
-    return res.status(200).json(getReserva);
-  } catch (erro) {
-    console.log(erro);
-    return res.status(500).json({ erro: "Erro interno no servidor" });
+  static async getAllReservas() {
+    const reservas = await prismaClient_default.reserva.findMany();
+    return reservas;
   }
-}
+  static async getUniqueReserva(id) {
+    const reserva = await prismaClient_default.reserva.findUnique({
+      where: { id }
+    });
+    if (!reserva) {
+      throw new Error("Reserva n\xE3o encontrada.");
+    }
+    return reserva;
+  }
+  static async updateReserva(id, updateData) {
+    const existingReserva = await prismaClient_default.reserva.findUnique({
+      where: { id }
+    });
+    if (!existingReserva) {
+      throw new Error("Reserva n\xE3o encontrada.");
+    }
+    const validatedUpdates = reserveSchema.partial().parse(updateData);
+    const updatedReserva = await prismaClient_default.reserva.update({
+      where: { id },
+      data: validatedUpdates
+    });
+    return updatedReserva;
+  }
+  static async deleteReserva(id) {
+    const existingReserva = await prismaClient_default.reserva.findUnique({
+      where: { id }
+    });
+    if (!existingReserva) {
+      throw new Error("Reserva n\xE3o encontrada.");
+    }
+    await prismaClient_default.reserva.delete({
+      where: { id }
+    });
+    return { message: "Reserva deletada com sucesso." };
+  }
+};
+var Reserva_Service_default = ReservaService;
 
-// src/Controllers/Reserva/DeleteReserva.Controller.ts
-var import_zod8 = require("zod");
-var deleteSchema2 = import_zod8.z.object({
-  id: import_zod8.z.string()
-});
-async function DeleteReservaController(req, res) {
-  try {
-    const { id } = deleteSchema2.parse(req.body);
-    const existingReservas = await prismaClient_default.reserva.findUnique({
-      where: {
-        id
+// src/Controllers/Reserva.Controller.ts
+var ReservaController = class {
+  static async createReserva(req, res) {
+    try {
+      const reservaData = req.body;
+      const newReserva = await Reserva_Service_default.createReserva(reservaData);
+      return res.status(201).json(newReserva);
+    } catch (error) {
+      if (error === "J\xE1 existe uma reserva para esta data de reserva.") {
+        return res.status(400).json({ erro: error });
       }
-    });
-    if (!existingReservas)
-      return res.status(404).json({ erro: "Reserva n\xE3o existente" });
-    const deleteReserva = await prismaClient_default.reserva.delete({
-      where: {
-        id
-      }
-    });
-    return res.status(200).json(deleteReserva);
-  } catch (erro) {
-    console.log(erro);
-    return res.status(500).json({ erro: "Erro interno no servidor" });
+      console.error(error);
+      return res.status(500).json({ erro: "Erro interno no servidor." });
+    }
   }
-}
-
-// src/Controllers/Reserva/UpdateReserva.Controller.ts
-var import_zod9 = require("zod");
-var reserveSchema2 = import_zod9.z.object({
-  data_da_reserva: import_zod9.z.date(),
-  data_da_devolucao: import_zod9.z.date(),
-  id_user: import_zod9.z.string(),
-  id_car: import_zod9.z.string(),
-  preco_total: import_zod9.z.number().min(0),
-  id_credit_card: import_zod9.z.string()
-});
-async function UpdateReservaController(req, res) {
-  try {
-    const {
-      data_da_reserva,
-      data_da_devolucao,
-      id_user,
-      id_car,
-      preco_total,
-      id_credit_card
-    } = reserveSchema2.parse(req.body);
-    const { id } = req.params;
-    const existingReserva = prismaClient_default.reserva.findUnique({
-      where: {
-        id
-      }
-    });
-    if (!existingReserva)
-      return res.status(404).json({ erro: "Reserva n\xE3o encontrada" });
-    const data = {
-      data_da_reserva,
-      data_da_devolucao,
-      id_user,
-      id_car,
-      preco_total,
-      id_credit_card
-    };
-    const updateUser = await prismaClient_default.reserva.update({
-      where: {
-        id
-      },
-      data
-    });
-    return res.status(200).json(updateUser);
-  } catch (erro) {
-    console.log(erro);
-    return res.status(500).json({ erro: "Erro interno do servidor" });
+  static async getAllReservas(req, res) {
+    try {
+      const reservas = await Reserva_Service_default.getAllReservas();
+      return res.status(200).json(reservas);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ erro: "Erro interno no servidor." });
+    }
   }
-}
+  static async getUniqueReserva(req, res) {
+    try {
+      const { id } = req.params;
+      const reserva = await Reserva_Service_default.getUniqueReserva(id);
+      return res.status(200).json(reserva);
+    } catch (error) {
+      if (error === "Reserva n\xE3o encontrada.") {
+        return res.status(404).json({ erro: error });
+      }
+      console.error(error);
+      return res.status(500).json({ erro: "Erro interno no servidor." });
+    }
+  }
+  static async updateReserva(req, res) {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      const updatedReserva = await Reserva_Service_default.updateReserva(id, updateData);
+      return res.status(200).json(updatedReserva);
+    } catch (error) {
+      if (error === "Reserva n\xE3o encontrada.") {
+        return res.status(404).json({ erro: error });
+      }
+      console.error(error);
+      return res.status(500).json({ erro: "Erro interno no servidor." });
+    }
+  }
+  static async deleteReserva(req, res) {
+    try {
+      const { id } = req.params;
+      const response = await Reserva_Service_default.deleteReserva(id);
+      return res.status(200).json(response);
+    } catch (error) {
+      if (error === "Reserva n\xE3o encontrada.") {
+        return res.status(404).json({ erro: error });
+      }
+      console.error(error);
+      return res.status(500).json({ erro: "Erro interno no servidor." });
+    }
+  }
+};
+var Reserva_Controller_default = ReservaController;
 
-// src/Controllers/Card_credit/CreateCard_Credit.Controller.ts
-var import_bcrypt3 = __toESM(require("bcrypt"));
-var import_zod10 = require("zod");
-var card_creditSchema = import_zod10.z.object({
-  cadNumber: import_zod10.z.string({}).max(19, { message: "Numero de Cart\xE3o Inv\xE1lido" }),
-  expiration: import_zod10.z.date(),
-  cvv: import_zod10.z.string(),
-  password: import_zod10.z.string().min(8, { message: "Precisa de no m\xEDnimo 8 caracteres." }),
-  user_id: import_zod10.z.string(),
-  saldo: import_zod10.z.number()
+// src/Service/Card_credit.service.ts
+var import_bcrypt2 = __toESM(require("bcrypt"));
+var import_zod4 = require("zod");
+var card_creditSchema = import_zod4.z.object({
+  cardNumber: import_zod4.z.string({}).max(19, { message: "Numero de Cart\xE3o Inv\xE1lido" }),
+  expiration: import_zod4.z.string(),
+  cvv: import_zod4.z.string().regex(/^\d{3,4}$/, { message: "CVV Inv\xE1lido" }),
+  password: import_zod4.z.string().min(8, { message: "Precisa de no m\xEDnimo 8 caracteres." }),
+  user_id: import_zod4.z.string(),
+  saldo: import_zod4.z.number()
 });
-async function CreateCar_CreditController(req, res) {
-  try {
-    const { cadNumber, expiration, cvv, password, user_id, saldo } = card_creditSchema.parse(req.body);
-    const { id } = req.params;
+var CardCredit = class {
+  static async createCardCredit(CardCredit2) {
+    const { cardNumber, expiration, cvv, password, user_id, saldo } = card_creditSchema.parse(CardCredit2);
     const existingCard = await prismaClient_default.creditCard.findUnique({
       where: {
-        id: String(id)
+        cardNumber
       }
     });
     if (existingCard)
-      return res.status(404).json({ erro: "Cart\xE3o j\xE1 cadastrado." });
-    const passwordHash = await import_bcrypt3.default.hash(password, 10);
+      throw new Error("Cart\xE3o j\xE1 cadastrado.");
+    ;
+    const passwordHash = await import_bcrypt2.default.hash(password, 10);
     const data = {
-      cadNumber,
-      expiration,
+      cardNumber,
+      expiration: new Date(expiration).toISOString(),
       cvv,
       password: passwordHash,
-      // Use o hash da senha
       user_id,
       saldo
     };
-    const createCard_credit = await prismaClient_default.creditCard.create({
+    const card = prismaClient_default.creditCard.create({
       data
     });
-    return res.status(200).json(createCard_credit);
-  } catch (erro) {
-    console.log(erro);
-    return res.status(500).json({ erro: "Erro interno no servidor." });
+    return card;
   }
-}
-
-// src/Controllers/Card_credit/GetUniqueCard_Credit.Controller.ts
-async function GetUniqueCard_CreditController(req, res) {
-  try {
-    const { id } = req.params;
-    const getUniqueCard_credit = await prismaClient_default.creditCard.findUnique({
-      where: {
-        id: String(id)
-      }
-    });
-    return res.status(200).json(getUniqueCard_credit);
-  } catch (erro) {
-    console.log(erro);
-    return res.status(500).json({ erro: "Erro interno do servidor." });
+  static async getAllCards() {
+    const cards = await prismaClient_default.creditCard.findMany();
+    return cards;
   }
-}
-
-// src/Controllers/Card_credit/UpdateCard_Credit.Controller.ts
-var import_bcrypt4 = __toESM(require("bcrypt"));
-var import_zod11 = require("zod");
-var card_creditSchema2 = import_zod11.z.object({
-  cadNumber: import_zod11.z.string({}).max(19, { message: "N\xFAmero de Cart\xE3o Inv\xE1lido" }),
-  expiration: import_zod11.z.date(),
-  cvv: import_zod11.z.string(),
-  password: import_zod11.z.string().min(8, { message: "Precisa ter no m\xEDnimo 8 caracteres." }),
-  user_id: import_zod11.z.string(),
-  saldo: import_zod11.z.number()
-});
-async function UpdateCard_CreditController(req, res) {
-  try {
-    const { cadNumber, expiration, cvv, password, user_id, saldo } = card_creditSchema2.parse(req.body);
-    const { id } = req.params;
-    const existingCard = await prismaClient_default.creditCard.findUnique({
-      where: {
-        id: String(id)
-      }
+  static async getUniqueCard(cardNumber) {
+    const card = await prismaClient_default.creditCard.findUnique({
+      where: { cardNumber }
     });
-    if (!existingCard) {
-      return res.status(404).json({ erro: "Cart\xE3o n\xE3o encontrado." });
+    if (!card) {
+      throw new Error("Cart\xE3o n\xE3o encontrado.");
     }
-    const passwordHash = await import_bcrypt4.default.hash(password, 10);
-    const data = {
-      cadNumber,
-      expiration,
-      cvv,
-      password: passwordHash,
-      user_id,
-      saldo
-    };
-    const updatedCard_credit = await prismaClient_default.creditCard.update({
-      where: {
-        id: String(id)
-      },
-      data
-    });
-    return res.status(200).json(updatedCard_credit);
-  } catch (erro) {
-    console.log(erro);
-    return res.status(500).json({ erro: "Erro interno no servidor." });
+    return card;
   }
-}
+  static async deleteCard(cardNumber) {
+    const existingCardCredit = await prismaClient_default.creditCard.findUnique({
+      where: { cardNumber }
+    });
+    if (!existingCardCredit) {
+      throw new Error("Cart\xE3o n\xE3o encontrado.");
+    }
+    await prismaClient_default.creditCard.delete({
+      where: { cardNumber }
+    });
+    return { message: "Cart\xE3o deletado com sucesso." };
+  }
+  static async updateCard(cardNumber, updateData) {
+    const existingCardCredit = await prismaClient_default.creditCard.findUnique({
+      where: { cardNumber }
+    });
+    if (!existingCardCredit) {
+      throw new Error("Cart\xE3o n\xE3o encontrado.");
+    }
+    if (updateData.password) {
+      updateData.password = await import_bcrypt2.default.hash(updateData.password, 10);
+    }
+    const updatedCard = await prismaClient_default.creditCard.update({
+      where: { cardNumber },
+      data: updateData
+    });
+    return updatedCard;
+  }
+};
+var Card_credit_service_default = CardCredit;
+
+// src/Controllers/Card_Credit.Controller.ts
+var CardCreditController = class {
+  static async createCardCredit(req, res) {
+    try {
+      const cardData = req.body;
+      const newCard = await Card_credit_service_default.createCardCredit(cardData);
+      return res.status(201).json(newCard);
+    } catch (error) {
+      if (error === "Cart\xE3o j\xE1 cadastrado.") {
+        return res.status(400).json({ error });
+      }
+      console.error(error);
+      return res.status(500).json({ error: "Erro interno do servidor." });
+    }
+  }
+  static async getAllCards(req, res) {
+    try {
+      const cards = await Card_credit_service_default.getAllCards();
+      return res.status(200).json(cards);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Erro interno do servidor." });
+    }
+  }
+  static async getUniqueCard(req, res) {
+    try {
+      const { cardNumber } = req.params;
+      const card = await Card_credit_service_default.getUniqueCard(cardNumber);
+      return res.status(200).json(card);
+    } catch (error) {
+      if (error === "Cart\xE3o n\xE3o encontrado.") {
+        return res.status(404).json({ error });
+      }
+      console.error(error);
+      return res.status(500).json({ error: "Erro interno do servidor." });
+    }
+  }
+  static async deleteCard(req, res) {
+    try {
+      const { cardNumber } = req.params;
+      const response = await Card_credit_service_default.deleteCard(cardNumber);
+      return res.status(200).json(response);
+    } catch (error) {
+      if (error === "Cart\xE3o n\xE3o encontrado.") {
+        return res.status(404).json({ error });
+      }
+      console.error(error);
+      return res.status(500).json({ error: "Erro interno do servidor." });
+    }
+  }
+  static async updateCard(req, res) {
+    try {
+      const { cardNumber } = req.params;
+      const updateData = req.body;
+      const updatedCard = await Card_credit_service_default.updateCard(cardNumber, updateData);
+      return res.status(200).json(updatedCard);
+    } catch (error) {
+      if (error === "Cart\xE3o n\xE3o encontrado.") {
+        return res.status(404).json({ error });
+      }
+      console.error(error);
+      return res.status(500).json({ error: "Erro interno do servidor." });
+    }
+  }
+};
+var Card_Credit_Controller_default = CardCreditController;
 
 // src/routes/routes.service.ts
 var router = import_express.default.Router();
 router.get("/", async (req, res) => {
   res.send("Hello World!");
 });
-router.post("/create-user", CreateUserController);
-router.get("/get-All-User", GetUserController);
-router.get("/get-user", getUniqueUserController);
-router.delete("/delete-user", DeleteUserController);
-router.put("/update-user", UpdateUserController);
-router.post("/create-car", CreateCars_Controller_default);
-router.get("/get-All-cars", GetCarController);
-router.get("/get-Unique-car", GetUniqueCarController);
-router.delete("/delete-car", DeleteCarController);
-router.put("/update-car", UpdateCars_Controller_default);
-router.post("/create-reserva", CreateReservaController);
-router.get("/get-reserva", GetReservaController);
-router.delete("/delete-reserva", DeleteReservaController);
-router.put("/update-reserva", UpdateReservaController);
-router.post("/create-card_credit", CreateCar_CreditController);
-router.get("/get_card_credit", GetUniqueCard_CreditController);
-router.put("/update_card_credit", UpdateCard_CreditController);
+router.post("/create-user", UserController.createUser);
+router.get("/get-All-User", UserController.getUser);
+router.get("/get-user/:id", UserController.getUserById);
+router.delete("/delete-user/:id", UserController.deleteUser);
+router.put("/update-user/:id", UserController.updateUser);
+router.post("/create-car", Cars_Controller_default.createCar);
+router.get("/get-All-cars", Cars_Controller_default.getCar);
+router.get("/get-Unique-car/:id", Cars_Controller_default.getByIdCar);
+router.delete("/delete-car/:id", Cars_Controller_default.deleteCar);
+router.put("/update-car/:id", Cars_Controller_default.updateCar);
+router.post("/create-reserva", Reserva_Controller_default.createReserva);
+router.get("/get-reserva", Reserva_Controller_default.getAllReservas);
+router.get("/get-reserva/:id", Reserva_Controller_default.getUniqueReserva);
+router.delete("/delete-reserva/:id", Reserva_Controller_default.deleteReserva);
+router.put("/update-reserva/:id", Reserva_Controller_default.updateReserva);
+router.post("/create-card_credit", Card_Credit_Controller_default.createCardCredit);
+router.get("/get_card_credit", Card_Credit_Controller_default.getAllCards);
+router.delete("/delete-card-credit/:id", Card_Credit_Controller_default.deleteCard);
+router.get("get-unique-card/:id", Card_Credit_Controller_default.getUniqueCard);
+router.put("/update_card_credit/:id", Card_Credit_Controller_default.updateCard);
 var routes_service_default = router;
 
 // src/server.ts
 var app = (0, import_express2.default)();
 app.use(import_express2.default.json());
 app.use(routes_service_default);
-var port = 3e3;
+var PORT = process.env.PORT;
 app.use("/api", routes_service_default);
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });

@@ -23,6 +23,8 @@ Embora o projeto seja fictício, ele serve como um exemplo prático de como dese
 aluguel de carros com recursos de autenticação de usuários,
 reserva de veículos e gerenciamento de pagamentos. Tenha em mente que todos os
 dados são simulados e não há funcionalidades de pagamento real.
+Porém a acriação de sistemas de segurança no projeto principalmente na parte dos, 
+cartões onde se é aplicado sistemas de encriptação.
 
 ## Tecnologias Utilizadas
 

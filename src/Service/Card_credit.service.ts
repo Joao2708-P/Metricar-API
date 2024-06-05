@@ -4,10 +4,10 @@ import CryptoJS from "crypto-js";
 import { z } from "zod";
 
 const card_creditSchema = z.object({
-    cardNumber: z.string({}).max(19, {message: "Numero de Cartão Inválido"}),
-    expiration: z.string(),
+    cardNumber: z.string().regex(/^\d{4}-\d{4}-\d{4}-\d{4}$/, { message: "Número de cartão de crédito inválido. O formato deve ser XXXX-XXXX-XXXX-XXXX." }),
+    expiration: z.date(),
     cvv: z.string().regex(/^\d{3,4}$/, { message: "CVV Inválido" }),
-    password: z.string().min(8, {message: "Precisa de no mínimo 8 caracteres."}),
+    password: z.string().regex(/^(?=.*[A-Z])(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {message: "Senha inválida. Deve conter pelo menos 8 caracteres, pelo menos uma letra maiúscula e pelo menos um dos seguintes caracteres especiais: @$!%*?&."}),
     user_id: z.string(), 
     balance: z.number()
 });

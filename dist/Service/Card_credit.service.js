@@ -44,10 +44,10 @@ var import_bcrypt = __toESM(require("bcrypt"));
 var import_crypto_js = __toESM(require("crypto-js"));
 var import_zod = require("zod");
 var card_creditSchema = import_zod.z.object({
-  cardNumber: import_zod.z.string({}).max(19, { message: "Numero de Cart\xE3o Inv\xE1lido" }),
-  expiration: import_zod.z.string(),
+  cardNumber: import_zod.z.string().regex(/^\d{4}-\d{4}-\d{4}-\d{4}$/, { message: "N\xFAmero de cart\xE3o de cr\xE9dito inv\xE1lido. O formato deve ser XXXX-XXXX-XXXX-XXXX." }),
+  expiration: import_zod.z.date(),
   cvv: import_zod.z.string().regex(/^\d{3,4}$/, { message: "CVV Inv\xE1lido" }),
-  password: import_zod.z.string().min(8, { message: "Precisa de no m\xEDnimo 8 caracteres." }),
+  password: import_zod.z.string().regex(/^(?=.*[A-Z])(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, { message: "Senha inv\xE1lida. Deve conter pelo menos 8 caracteres, pelo menos uma letra mai\xFAscula e pelo menos um dos seguintes caracteres especiais: @$!%*?&." }),
   user_id: import_zod.z.string(),
   balance: import_zod.z.number()
 });

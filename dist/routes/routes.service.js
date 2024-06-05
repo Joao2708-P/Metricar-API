@@ -35,7 +35,7 @@ __export(routes_service_exports, {
 module.exports = __toCommonJS(routes_service_exports);
 var import_express = __toESM(require("express"));
 
-// src/Service/CreateUser.Service.ts
+// src/Service/User.Service.ts
 var import_bcrypt = __toESM(require("bcrypt"));
 var import_zod = require("zod");
 
@@ -44,16 +44,15 @@ var import_client = require("@prisma/client");
 var prisma = new import_client.PrismaClient();
 var prismaClient_default = prisma;
 
-// src/Service/CreateUser.Service.ts
+// src/Service/User.Service.ts
 var userSchema = import_zod.z.object({
   name: import_zod.z.string(),
   email: import_zod.z.string().email({ message: "Email inv\xE1lido!" }),
-  password: import_zod.z.string().min(8, { message: "Senha precisa conter no m\xEDnimo 8 caracteres." }),
-  card_credit: import_zod.z.string().max(19)
+  password: import_zod.z.string().min(8, { message: "Senha precisa conter no m\xEDnimo 8 caracteres." })
 });
 var UserService = class {
   static async createUser(userData) {
-    const { name, email, password, card_credit } = userSchema.parse(userData);
+    const { name, email, password } = userSchema.parse(userData);
     const existingUser = await prismaClient_default.user.findUnique({
       where: { email }
     });
@@ -64,8 +63,7 @@ var UserService = class {
     const data = {
       name,
       email,
-      password: passwordHash,
-      card_credit
+      password: passwordHash
     };
     const createdUser = await prismaClient_default.user.create({
       data
@@ -114,14 +112,14 @@ var UserService = class {
     return { message: "Usu\xE1rio deletado com sucesso." };
   }
 };
-var CreateUser_Service_default = UserService;
+var User_Service_default = UserService;
 
 // src/Controllers/User.Controller.ts
 var UserController = class {
   static async createUser(req, res) {
     try {
       const userData = req.body;
-      const createdUser = await CreateUser_Service_default.createUser(userData);
+      const createdUser = await User_Service_default.createUser(userData);
       return res.status(201).json(createdUser);
     } catch (error) {
       console.error(error);
@@ -133,7 +131,7 @@ var UserController = class {
   }
   static async getUser(req, res) {
     try {
-      const user = await CreateUser_Service_default.getUser();
+      const user = await User_Service_default.getUser();
       return res.status(200).json(user);
     } catch (error) {
       return res.status(400).json({ error: "Erro ao cadastrar ao buscar usu\xE1rios" });
@@ -142,7 +140,7 @@ var UserController = class {
   static async getUserById(req, res) {
     try {
       const { id } = req.params;
-      const user = await CreateUser_Service_default.getUserById(id);
+      const user = await User_Service_default.getUserById(id);
       return res.status(200).json(user);
     } catch (error) {
       console.error(error);
@@ -153,7 +151,7 @@ var UserController = class {
     try {
       const { id } = req.params;
       const updateData = req.body;
-      const updatedUser = await CreateUser_Service_default.updateUser(id, updateData);
+      const updatedUser = await User_Service_default.updateUser(id, updateData);
       return res.status(200).json(updatedUser);
     } catch (error) {
       console.error(error);
@@ -163,7 +161,7 @@ var UserController = class {
   static async deleteUser(req, res) {
     try {
       const { id } = req.params;
-      const message = await CreateUser_Service_default.deleteUser(id);
+      const message = await User_Service_default.deleteUser(id);
       return res.status(200).json(message);
     } catch (error) {
       console.error(error);
@@ -472,6 +470,7 @@ var Reserva_Controller_default = ReservaController;
 
 // src/Service/Card_credit.service.ts
 var import_bcrypt2 = __toESM(require("bcrypt"));
+var import_crypto_js = __toESM(require("crypto-js"));
 var import_zod4 = require("zod");
 var card_creditSchema = import_zod4.z.object({
   cardNumber: import_zod4.z.string({}).max(19, { message: "Numero de Cart\xE3o Inv\xE1lido" }),
@@ -479,61 +478,82 @@ var card_creditSchema = import_zod4.z.object({
   cvv: import_zod4.z.string().regex(/^\d{3,4}$/, { message: "CVV Inv\xE1lido" }),
   password: import_zod4.z.string().min(8, { message: "Precisa de no m\xEDnimo 8 caracteres." }),
   user_id: import_zod4.z.string(),
-  saldo: import_zod4.z.number()
+  balance: import_zod4.z.number()
 });
+var SECRET_KEY = process.env.JWT_SECRETE_CARDCREDIT || "iefj0efjaipons\xE7ldkjadlks";
 var CardCredit = class {
+  static encrypt(KEY) {
+    return import_crypto_js.default.AES.encrypt(KEY, SECRET_KEY).toString();
+  }
+  static decrypt(KEY) {
+    const bytes = import_crypto_js.default.AES.decrypt(KEY, SECRET_KEY);
+    return bytes.toString(import_crypto_js.default.enc.Utf8);
+  }
   static async createCardCredit(CardCredit2) {
-    const { cardNumber, expiration, cvv, password, user_id, saldo } = card_creditSchema.parse(CardCredit2);
+    const { cardNumber, expiration, cvv, password, user_id, balance } = card_creditSchema.parse(CardCredit2);
     const existingCard = await prismaClient_default.creditCard.findUnique({
       where: {
-        cardNumber
+        cardNumber: this.encrypt(cardNumber)
       }
     });
     if (existingCard)
       throw new Error("Cart\xE3o j\xE1 cadastrado.");
     ;
     const passwordHash = await import_bcrypt2.default.hash(password, 10);
+    const encrypt_cardNumber = this.encrypt(cardNumber);
+    const encryot_cvv = this.encrypt(cvv);
     const data = {
-      cardNumber,
+      cardNumber: encrypt_cardNumber,
       expiration: new Date(expiration).toISOString(),
-      cvv,
+      cvv: encryot_cvv,
       password: passwordHash,
       user_id,
-      saldo
+      balance
     };
-    const card = prismaClient_default.creditCard.create({
+    const card = await prismaClient_default.creditCard.create({
       data
     });
     return card;
   }
   static async getAllCards() {
     const cards = await prismaClient_default.creditCard.findMany();
-    return cards;
+    return cards.map((card) => ({
+      ...card,
+      cardNumber: this.decrypt(card.cardNumber),
+      cvv: this.decrypt(card.cvv)
+    }));
   }
   static async getUniqueCard(cardNumber) {
+    const encryptedCardNumber = this.encrypt(cardNumber);
     const card = await prismaClient_default.creditCard.findUnique({
-      where: { cardNumber }
+      where: { cardNumber: encryptedCardNumber }
     });
     if (!card) {
       throw new Error("Cart\xE3o n\xE3o encontrado.");
     }
-    return card;
+    return {
+      ...card,
+      cardNumber: this.decrypt(card.cardNumber),
+      cvv: this.decrypt(card.cvv)
+    };
   }
   static async deleteCard(cardNumber) {
+    const encryptedCardNumber = this.encrypt(cardNumber);
     const existingCardCredit = await prismaClient_default.creditCard.findUnique({
-      where: { cardNumber }
+      where: { cardNumber: encryptedCardNumber }
     });
     if (!existingCardCredit) {
       throw new Error("Cart\xE3o n\xE3o encontrado.");
     }
     await prismaClient_default.creditCard.delete({
-      where: { cardNumber }
+      where: { cardNumber: encryptedCardNumber }
     });
     return { message: "Cart\xE3o deletado com sucesso." };
   }
   static async updateCard(cardNumber, updateData) {
+    const encryptedCardNumber = this.encrypt(cardNumber);
     const existingCardCredit = await prismaClient_default.creditCard.findUnique({
-      where: { cardNumber }
+      where: { cardNumber: encryptedCardNumber }
     });
     if (!existingCardCredit) {
       throw new Error("Cart\xE3o n\xE3o encontrado.");
@@ -541,8 +561,14 @@ var CardCredit = class {
     if (updateData.password) {
       updateData.password = await import_bcrypt2.default.hash(updateData.password, 10);
     }
+    if (updateData.cardNumber) {
+      updateData.cardNumber = this.encrypt(updateData.cardNumber);
+    }
+    if (updateData.cvv) {
+      updateData.cvv = this.encrypt(updateData.cvv);
+    }
     const updatedCard = await prismaClient_default.creditCard.update({
-      where: { cardNumber },
+      where: { cardNumber: encryptedCardNumber },
       data: updateData
     });
     return updatedCard;
@@ -617,6 +643,61 @@ var CardCreditController = class {
 };
 var Card_Credit_Controller_default = CardCreditController;
 
+// src/Service/Auth/Auth.Service.ts
+var import_client2 = require("@prisma/client");
+var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
+var import_bcrypt3 = __toESM(require("bcrypt"));
+var prisma2 = new import_client2.PrismaClient();
+var AuthService = class {
+  secretKey;
+  constructor() {
+    this.secretKey = process.env.JWT_SECRET_TOKEN || "defaultSecretKey";
+  }
+  async hashPassword(password) {
+    const saltRounds = 10;
+    const hashedPassword = await import_bcrypt3.default.hash(password, saltRounds);
+    return hashedPassword;
+  }
+  async comparePassword(password, hashedPassword) {
+    const isMatch = await import_bcrypt3.default.compare(password, hashedPassword);
+    return isMatch;
+  }
+  generateToken(user) {
+    const payload = { id: user.id, name: user.name, email: user.email, card_credit: user.card_credit };
+    const token = import_jsonwebtoken.default.sign(payload, this.secretKey, { expiresIn: "1h" });
+    return token;
+  }
+  verifyToken(token) {
+    return import_jsonwebtoken.default.verify(token, this.secretKey);
+  }
+  async authenticate(email, password) {
+    const user = await prisma2.user.findUnique({ where: { email } });
+    if (!user) {
+      throw new Error("Usu\xE1rio n\xE3o encontrado");
+    }
+    const isPasswordValid = await this.comparePassword(password, user.password);
+    if (!isPasswordValid) {
+      throw new Error("Senha inv\xE1lida");
+    }
+    return this.generateToken(user);
+  }
+};
+var Auth_Service_default = new AuthService();
+
+// src/Controllers/Auth/Auth.Controller.ts
+var AuthController = class {
+  static async login(req, res) {
+    try {
+      const { email, password } = req.body;
+      const token = await Auth_Service_default.authenticate(email, password);
+      return res.status(200).json({ token });
+    } catch (error) {
+      return res.status(401).json({ error });
+    }
+  }
+};
+var Auth_Controller_default = AuthController;
+
 // src/routes/routes.service.ts
 var router = import_express.default.Router();
 router.get("/", async (req, res) => {
@@ -642,4 +723,5 @@ router.get("/get_card_credit", Card_Credit_Controller_default.getAllCards);
 router.delete("/delete-card-credit/:id", Card_Credit_Controller_default.deleteCard);
 router.get("get-unique-card/:id", Card_Credit_Controller_default.getUniqueCard);
 router.put("/update_card_credit/:id", Card_Credit_Controller_default.updateCard);
+router.post("/log-user", Auth_Controller_default.login);
 var routes_service_default = router;

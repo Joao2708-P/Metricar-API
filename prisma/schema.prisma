@@ -14,7 +14,6 @@ model User{
   name        String
   email       String   @unique
   password    String
-  card_credit String
   reserva     Reserva[]
   card        CreditCard[]
   cretadeAt   DateTime @default(now())
@@ -62,7 +61,7 @@ model CreditCard {
   cvv           String
   password      String
   user_id       String
-  saldo         Decimal
+  balance       Decimal
   owner         User    @relation(fields: [user_id], references: [id])
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

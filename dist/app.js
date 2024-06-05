@@ -5,6 +5,10 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -21,8 +25,14 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/app.ts
+var app_exports = {};
+__export(app_exports, {
+  default: () => app_default
+});
+module.exports = __toCommonJS(app_exports);
 var import_express2 = __toESM(require("express"));
 var import_helmet = __toESM(require("helmet"));
 var import_express_rate_limit = __toESM(require("express-rate-limit"));
@@ -747,9 +757,3 @@ app.use(errorHandlerMiddleware_default);
 app.use(limiter);
 app.use("/api", routes_service_default);
 var app_default = app;
-
-// src/server.ts
-var PORT = process.env.PORT || 3e3;
-app_default.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});

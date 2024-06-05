@@ -17,6 +17,11 @@ import ReservaController from '../Controllers/Reserva.Controller'
 import CardCreditController from '../Controllers/Card_Credit.Controller';
 //------------------------------------------------------------------------------
 
+//Auth Controller
+import AuthController from '../Controllers/Auth/Auth.Controller';
+import authMiddleware from '../Service/Auth/authMiddleware';
+//------------------------------------------------------------------------------
+
 router.get('/', async (req, res) => {
     res.send('Hello World!');
 });
@@ -68,5 +73,9 @@ router.get("get-unique-card/:id", CardCreditController.getUniqueCard)
 
 router.put("/update_card_credit/:id", CardCreditController.updateCard);
 //---------------------------------------------------------------
+
+//Rota de Login
+router.post("/log-user", AuthController.login)
+//-----------------------------------------------
 
 export default router;

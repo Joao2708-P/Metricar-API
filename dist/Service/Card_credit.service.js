@@ -41,6 +41,7 @@ var prismaClient_default = prisma;
 
 // src/Service/Card_credit.service.ts
 var import_bcrypt = __toESM(require("bcrypt"));
+var import_crypto_js = __toESM(require("crypto-js"));
 var import_zod = require("zod");
 var card_creditSchema = import_zod.z.object({
   cardNumber: import_zod.z.string({}).max(19, { message: "Numero de Cart\xE3o Inv\xE1lido" }),
@@ -48,61 +49,82 @@ var card_creditSchema = import_zod.z.object({
   cvv: import_zod.z.string().regex(/^\d{3,4}$/, { message: "CVV Inv\xE1lido" }),
   password: import_zod.z.string().min(8, { message: "Precisa de no m\xEDnimo 8 caracteres." }),
   user_id: import_zod.z.string(),
-  saldo: import_zod.z.number()
+  balance: import_zod.z.number()
 });
+var SECRET_KEY = process.env.JWT_SECRETE_CARDCREDIT || "iefj0efjaipons\xE7ldkjadlks";
 var CardCredit = class {
+  static encrypt(KEY) {
+    return import_crypto_js.default.AES.encrypt(KEY, SECRET_KEY).toString();
+  }
+  static decrypt(KEY) {
+    const bytes = import_crypto_js.default.AES.decrypt(KEY, SECRET_KEY);
+    return bytes.toString(import_crypto_js.default.enc.Utf8);
+  }
   static async createCardCredit(CardCredit2) {
-    const { cardNumber, expiration, cvv, password, user_id, saldo } = card_creditSchema.parse(CardCredit2);
+    const { cardNumber, expiration, cvv, password, user_id, balance } = card_creditSchema.parse(CardCredit2);
     const existingCard = await prismaClient_default.creditCard.findUnique({
       where: {
-        cardNumber
+        cardNumber: this.encrypt(cardNumber)
       }
     });
     if (existingCard)
       throw new Error("Cart\xE3o j\xE1 cadastrado.");
     ;
     const passwordHash = await import_bcrypt.default.hash(password, 10);
+    const encrypt_cardNumber = this.encrypt(cardNumber);
+    const encryot_cvv = this.encrypt(cvv);
     const data = {
-      cardNumber,
+      cardNumber: encrypt_cardNumber,
       expiration: new Date(expiration).toISOString(),
-      cvv,
+      cvv: encryot_cvv,
       password: passwordHash,
       user_id,
-      saldo
+      balance
     };
-    const card = prismaClient_default.creditCard.create({
+    const card = await prismaClient_default.creditCard.create({
       data
     });
     return card;
   }
   static async getAllCards() {
     const cards = await prismaClient_default.creditCard.findMany();
-    return cards;
+    return cards.map((card) => ({
+      ...card,
+      cardNumber: this.decrypt(card.cardNumber),
+      cvv: this.decrypt(card.cvv)
+    }));
   }
   static async getUniqueCard(cardNumber) {
+    const encryptedCardNumber = this.encrypt(cardNumber);
     const card = await prismaClient_default.creditCard.findUnique({
-      where: { cardNumber }
+      where: { cardNumber: encryptedCardNumber }
     });
     if (!card) {
       throw new Error("Cart\xE3o n\xE3o encontrado.");
     }
-    return card;
+    return {
+      ...card,
+      cardNumber: this.decrypt(card.cardNumber),
+      cvv: this.decrypt(card.cvv)
+    };
   }
   static async deleteCard(cardNumber) {
+    const encryptedCardNumber = this.encrypt(cardNumber);
     const existingCardCredit = await prismaClient_default.creditCard.findUnique({
-      where: { cardNumber }
+      where: { cardNumber: encryptedCardNumber }
     });
     if (!existingCardCredit) {
       throw new Error("Cart\xE3o n\xE3o encontrado.");
     }
     await prismaClient_default.creditCard.delete({
-      where: { cardNumber }
+      where: { cardNumber: encryptedCardNumber }
     });
     return { message: "Cart\xE3o deletado com sucesso." };
   }
   static async updateCard(cardNumber, updateData) {
+    const encryptedCardNumber = this.encrypt(cardNumber);
     const existingCardCredit = await prismaClient_default.creditCard.findUnique({
-      where: { cardNumber }
+      where: { cardNumber: encryptedCardNumber }
     });
     if (!existingCardCredit) {
       throw new Error("Cart\xE3o n\xE3o encontrado.");
@@ -110,8 +132,14 @@ var CardCredit = class {
     if (updateData.password) {
       updateData.password = await import_bcrypt.default.hash(updateData.password, 10);
     }
+    if (updateData.cardNumber) {
+      updateData.cardNumber = this.encrypt(updateData.cardNumber);
+    }
+    if (updateData.cvv) {
+      updateData.cvv = this.encrypt(updateData.cvv);
+    }
     const updatedCard = await prismaClient_default.creditCard.update({
-      where: { cardNumber },
+      where: { cardNumber: encryptedCardNumber },
       data: updateData
     });
     return updatedCard;

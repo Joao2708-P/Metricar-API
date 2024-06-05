@@ -7,12 +7,11 @@ const userSchema = z.object({
     name: z.string(),
     email: z.string().email({ message: "Email inválido!" }),
     password: z.string().min(8, { message: "Senha precisa conter no mínimo 8 caracteres." }),
-    card_credit: z.string().max(19),
 });
 
 class UserService {
     static async createUser(userData: any) {
-        const { name, email, password, card_credit } = userSchema.parse(userData);
+        const { name, email, password} = userSchema.parse(userData);
 
         const existingUser = await prisma.user.findUnique({
             where: { email }
@@ -28,7 +27,6 @@ class UserService {
             name,
             email,
             password: passwordHash,
-            card_credit
         };
 
         const createdUser = await prisma.user.create({
@@ -92,6 +90,7 @@ class UserService {
 
         return { message: "Usuário deletado com sucesso." };
     }
+    
 }
 
 export default UserService;

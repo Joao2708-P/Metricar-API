@@ -27,14 +27,12 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/Controllers/User.Controller.ts
-var User_Controller_exports = {};
-__export(User_Controller_exports, {
-  default: () => UserController
-});
-module.exports = __toCommonJS(User_Controller_exports);
-
 // src/Service/User.Service.ts
+var User_Service_exports = {};
+__export(User_Service_exports, {
+  default: () => User_Service_default
+});
+module.exports = __toCommonJS(User_Service_exports);
 var import_bcrypt = __toESM(require("bcrypt"));
 var import_zod = require("zod");
 
@@ -112,59 +110,3 @@ var UserService = class {
   }
 };
 var User_Service_default = UserService;
-
-// src/Controllers/User.Controller.ts
-var UserController = class {
-  static async createUser(req, res) {
-    try {
-      const userData = req.body;
-      const createdUser = await User_Service_default.createUser(userData);
-      return res.status(201).json(createdUser);
-    } catch (error) {
-      console.error(error);
-      if (error === "Email de usu\xE1rio j\xE1 cadastrado.") {
-        return res.status(409).json({ error });
-      }
-      return res.status(400).json({ error: "Erro ao cadastrar o usu\xE1rio" });
-    }
-  }
-  static async getUser(req, res) {
-    try {
-      const user = await User_Service_default.getUser();
-      return res.status(200).json(user);
-    } catch (error) {
-      return res.status(400).json({ error: "Erro ao cadastrar ao buscar usu\xE1rios" });
-    }
-  }
-  static async getUserById(req, res) {
-    try {
-      const { id } = req.params;
-      const user = await User_Service_default.getUserById(id);
-      return res.status(200).json(user);
-    } catch (error) {
-      console.error(error);
-      return res.status(404).json({ error: "Usu\xE1rio n\xE3o encontrado." });
-    }
-  }
-  static async updateUser(req, res) {
-    try {
-      const { id } = req.params;
-      const updateData = req.body;
-      const updatedUser = await User_Service_default.updateUser(id, updateData);
-      return res.status(200).json(updatedUser);
-    } catch (error) {
-      console.error(error);
-      return res.status(400).json({ error: "Erro ao atualizar o usu\xE1rio" });
-    }
-  }
-  static async deleteUser(req, res) {
-    try {
-      const { id } = req.params;
-      const message = await User_Service_default.deleteUser(id);
-      return res.status(200).json(message);
-    } catch (error) {
-      console.error(error);
-      return res.status(400).json({ error: "Erro ao deletar o usu\xE1rio" });
-    }
-  }
-};

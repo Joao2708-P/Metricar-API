@@ -3,6 +3,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cors from 'cors';
 import router from './routes/routes.service';
+import errorHandlerMiddleware from './middleware/errorHandlerMiddleware';
 
 const app = express();
 
@@ -19,6 +20,7 @@ const limiter = rateLimit({
     max: 100 // Limite cada IP a 100 requisições por "window" (aqui, por 15 minutos)
 });
 
+app.use(errorHandlerMiddleware);
 app.use(limiter);
 app.use('/api', router);
 

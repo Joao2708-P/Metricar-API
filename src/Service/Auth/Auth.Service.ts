@@ -23,7 +23,7 @@ class AuthService {
     }
 
     generateToken(user: User): string {
-        const payload = { id: user.id, name: user.name, email: user.email, card_credit: user.card_credit };
+        const payload = { id: user.id, name: user.name, email: user.email};
         const token = jwt.sign(payload, this.secretKey, { expiresIn: '1h' });
         return token;
     }

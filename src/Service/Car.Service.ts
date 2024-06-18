@@ -1,6 +1,11 @@
 import prisma from "../Database/prismaClient";
 import { z } from "zod";
+
 import { Prisma } from "@prisma/client";
+import { Buffer } from "buffer";
+import fs from 'fs';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
 
 const createCarSchema = z.object({
     name: z.string(),
@@ -12,25 +17,40 @@ const createCarSchema = z.object({
     exterior_color: z.string(),
     interior_color: z.string(),
     disponibilidade: z.boolean(), 
-    tipo_do_carro_id: z.string(),
+    type_slug: z.string(),
+    promotion_slug: z.boolean()
 });
 
 class CarService {
+
     static async createCar(carData: any) {
         const { name, imagem, preco, quilometragem, ano, condicao, 
-            exterior_color, interior_color, disponibilidade, tipo_do_carro_id } = createCarSchema.parse(carData);
+            exterior_color, interior_color, disponibilidade, type_slug, promotion_slug } = createCarSchema.parse(carData);
+
+            const imageBuffer = Buffer.from(imagem, 'base64');
+            const fileName = `${uuidv4()}.png`;
+
+            const uploadsDir = path.join(__dirname, 'uploads');
+            const filePath = path.join(uploadsDir, fileName);
+    
+            if (!fs.existsSync(uploadsDir)) {
+                fs.mkdirSync(uploadsDir, { recursive: true });
+            }
+    
+            fs.writeFileSync(filePath, imageBuffer);
 
         const data = {
             name,
-            imagem,
+            imagem: filePath,
             preco,
             quilometragem,
             ano,
             condicao,
-            exterior_color,
+            exterior_color, 
             interior_color,
             disponibilidade,
-            tipo_do_carro_id
+            type_slug,
+            promotion_slug
         };
 
         const createdCar = await prisma.car.create({

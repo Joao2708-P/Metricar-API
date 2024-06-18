@@ -29,10 +29,9 @@ model Car{
   quilometragem          Int 
   ano                    Int
   condicao               String  
-  exterior_color         String
+  exterior_color         String 
   interior_color         String
   disponibilidade        Boolean
-  tipo_do_carro_id       String
   reserva                Reserva[]
   type_slug              String
   promotion_slug         Boolean

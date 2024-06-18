@@ -5,6 +5,7 @@ class CarController {
     static async createCar(req: Request, res: Response) {
         try {
             const carData = req.body;
+
             const createdCar = await CarService.createCar(carData);
             return res.status(201).json(createdCar);
         } catch (error) {

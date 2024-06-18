@@ -1,6 +1,8 @@
 import express from 'express';
+import storage from '../multer/multer.conf';
 const router = express.Router();
 
+const upload = multer({storage: storage("car-image")});
 //User Controller
 import UserController from '../Controllers/User.Controller';
 //-----------------------------------------------------------------------------
@@ -20,6 +22,7 @@ import CardCreditController from '../Controllers/Card_Credit.Controller';
 //Auth Controller
 import AuthController from '../Controllers/Auth/Auth.Controller';
 import authMiddleware from '../Service/Auth/authMiddleware';
+import multer from 'multer';
 //------------------------------------------------------------------------------
 
 router.get('/', async (req, res) => {
@@ -39,7 +42,7 @@ router.put('/update-user/:id', UserController.updateUser);
 //---------------------------------------------------------------
 
 //Rotas dos Carros
-router.post("/create-car", CarController.createCar);
+router.post("/create-car",  upload.single('imagem'),  CarController.createCar);
 
 router.get("/get-All-cars", CarController.getCar);
 

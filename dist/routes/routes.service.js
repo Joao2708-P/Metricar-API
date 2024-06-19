@@ -35,6 +35,20 @@ __export(routes_service_exports, {
 module.exports = __toCommonJS(routes_service_exports);
 var import_express = __toESM(require("express"));
 
+// src/multer/multer.conf.ts
+var import_multer = __toESM(require("multer"));
+var import_path = __toESM(require("path"));
+var storage = (name_file) => import_multer.default.diskStorage({
+  destination: (req, file, callback) => {
+    callback(null, import_path.default.resolve("uploads"));
+  },
+  filename: (req, file, callback) => {
+    const extensionArq = file.originalname.split(".")[1];
+    callback(null, `${name_file}.${extensionArq}`);
+  }
+});
+var multer_conf_default = storage;
+
 // src/Service/User.Service.ts
 var import_bcrypt = __toESM(require("bcrypt"));
 var import_zod = require("zod");
@@ -172,6 +186,10 @@ var UserController = class {
 
 // src/Service/Car.Service.ts
 var import_zod2 = require("zod");
+var import_buffer = require("buffer");
+var import_fs = __toESM(require("fs"));
+var import_path2 = __toESM(require("path"));
+var import_uuid = require("uuid");
 var createCarSchema = import_zod2.z.object({
   name: import_zod2.z.string(),
   imagem: import_zod2.z.string(),
@@ -182,7 +200,8 @@ var createCarSchema = import_zod2.z.object({
   exterior_color: import_zod2.z.string(),
   interior_color: import_zod2.z.string(),
   disponibilidade: import_zod2.z.boolean(),
-  tipo_do_carro_id: import_zod2.z.string()
+  type_slug: import_zod2.z.string(),
+  promotion_slug: import_zod2.z.boolean()
 });
 var CarService = class {
   static async createCar(carData) {
@@ -196,11 +215,20 @@ var CarService = class {
       exterior_color,
       interior_color,
       disponibilidade,
-      tipo_do_carro_id
+      type_slug,
+      promotion_slug
     } = createCarSchema.parse(carData);
+    const imageBuffer = import_buffer.Buffer.from(imagem, "base64");
+    const fileName = `${(0, import_uuid.v4)()}.png`;
+    const uploadsDir = import_path2.default.join(__dirname, "uploads");
+    const filePath = import_path2.default.join(uploadsDir, fileName);
+    if (!import_fs.default.existsSync(uploadsDir)) {
+      import_fs.default.mkdirSync(uploadsDir, { recursive: true });
+    }
+    import_fs.default.writeFileSync(filePath, imageBuffer);
     const data = {
       name,
-      imagem,
+      imagem: filePath,
       preco,
       quilometragem,
       ano,
@@ -208,7 +236,8 @@ var CarService = class {
       exterior_color,
       interior_color,
       disponibilidade,
-      tipo_do_carro_id
+      type_slug,
+      promotion_slug
     };
     const createdCar = await prismaClient_default.car.create({
       data
@@ -663,7 +692,7 @@ var AuthService = class {
     return isMatch;
   }
   generateToken(user) {
-    const payload = { id: user.id, name: user.name, email: user.email, card_credit: user.card_credit };
+    const payload = { id: user.id, name: user.name, email: user.email };
     const token = import_jsonwebtoken.default.sign(payload, this.secretKey, { expiresIn: "1h" });
     return token;
   }
@@ -699,7 +728,9 @@ var AuthController = class {
 var Auth_Controller_default = AuthController;
 
 // src/routes/routes.service.ts
+var import_multer3 = __toESM(require("multer"));
 var router = import_express.default.Router();
+var upload = (0, import_multer3.default)({ storage: multer_conf_default("car-image") });
 router.get("/", async (req, res) => {
   res.send("Hello World!");
 });
@@ -708,7 +739,7 @@ router.get("/get-All-User", UserController.getUser);
 router.get("/get-user/:id", UserController.getUserById);
 router.delete("/delete-user/:id", UserController.deleteUser);
 router.put("/update-user/:id", UserController.updateUser);
-router.post("/create-car", Cars_Controller_default.createCar);
+router.post("/create-car", upload.single("imagem"), Cars_Controller_default.createCar);
 router.get("/get-All-cars", Cars_Controller_default.getCar);
 router.get("/get-Unique-car/:id", Cars_Controller_default.getByIdCar);
 router.delete("/delete-car/:id", Cars_Controller_default.deleteCar);

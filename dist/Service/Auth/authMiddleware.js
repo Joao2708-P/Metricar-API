@@ -54,7 +54,7 @@ var AuthService = class {
     return isMatch;
   }
   generateToken(user) {
-    const payload = { id: user.id, name: user.name, email: user.email, card_credit: user.card_credit };
+    const payload = { id: user.id, name: user.name, email: user.email };
     const token = import_jsonwebtoken.default.sign(payload, this.secretKey, { expiresIn: "1h" });
     return token;
   }

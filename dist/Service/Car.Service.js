@@ -1,7 +1,9 @@
 "use strict";
+var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -15,6 +17,14 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/Service/Car.Service.ts
@@ -31,6 +41,10 @@ var prismaClient_default = prisma;
 
 // src/Service/Car.Service.ts
 var import_zod = require("zod");
+var import_buffer = require("buffer");
+var import_fs = __toESM(require("fs"));
+var import_path = __toESM(require("path"));
+var import_uuid = require("uuid");
 var createCarSchema = import_zod.z.object({
   name: import_zod.z.string(),
   imagem: import_zod.z.string(),
@@ -41,7 +55,8 @@ var createCarSchema = import_zod.z.object({
   exterior_color: import_zod.z.string(),
   interior_color: import_zod.z.string(),
   disponibilidade: import_zod.z.boolean(),
-  tipo_do_carro_id: import_zod.z.string()
+  type_slug: import_zod.z.string(),
+  promotion_slug: import_zod.z.boolean()
 });
 var CarService = class {
   static async createCar(carData) {
@@ -55,11 +70,20 @@ var CarService = class {
       exterior_color,
       interior_color,
       disponibilidade,
-      tipo_do_carro_id
+      type_slug,
+      promotion_slug
     } = createCarSchema.parse(carData);
+    const imageBuffer = import_buffer.Buffer.from(imagem, "base64");
+    const fileName = `${(0, import_uuid.v4)()}.png`;
+    const uploadsDir = import_path.default.join(__dirname, "uploads");
+    const filePath = import_path.default.join(uploadsDir, fileName);
+    if (!import_fs.default.existsSync(uploadsDir)) {
+      import_fs.default.mkdirSync(uploadsDir, { recursive: true });
+    }
+    import_fs.default.writeFileSync(filePath, imageBuffer);
     const data = {
       name,
-      imagem,
+      imagem: filePath,
       preco,
       quilometragem,
       ano,
@@ -67,7 +91,8 @@ var CarService = class {
       exterior_color,
       interior_color,
       disponibilidade,
-      tipo_do_carro_id
+      type_slug,
+      promotion_slug
     };
     const createdCar = await prismaClient_default.car.create({
       data
